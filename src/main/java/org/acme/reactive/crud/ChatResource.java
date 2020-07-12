@@ -19,16 +19,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+import org.jboss.resteasy.annotations.SseElementType;
 import java.net.URI;
 
-@Path("fruits")
+@Path("chats")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class FruitResource {
+public class ChatResource {
 
     @Inject
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
     boolean schemaCreate;
+
 
     @Inject
     PgPool client;
@@ -41,39 +43,47 @@ public class FruitResource {
     }
 
     private void initdb() {
-        client.query("DROP TABLE IF EXISTS fruits").execute()
-                .flatMap(r -> client.query("CREATE TABLE fruits (id SERIAL PRIMARY KEY, name TEXT NOT NULL)").execute())
-                .flatMap(r -> client.query("INSERT INTO fruits (name) VALUES ('Kiwi')").execute())
-                .flatMap(r -> client.query("INSERT INTO fruits (name) VALUES ('Durian')").execute())
-                .flatMap(r -> client.query("INSERT INTO fruits (name) VALUES ('Pomelo')").execute())
-                .flatMap(r -> client.query("INSERT INTO fruits (name) VALUES ('Lychee')").execute())
+        client.query("DROP TABLE IF EXISTS chats").execute()
+                .flatMap(r -> client.query("CREATE TABLE chats (id SERIAL PRIMARY KEY, name TEXT NOT NULL, route TEXT, userdata TEXT, lat FLOAT(53), lng FLOAT(53))").execute())
                 .await().indefinitely();
     }
 
     @GET
-    public Multi<Fruit> get() {
-        return Fruit.findAll(client);
+    public Multi<Chat> get() {
+        return Chat.findAll(client);
     }
 
     @GET
     @Path("{id}")
     public Uni<Response> getSingle(@PathParam Long id) {
-        return Fruit.findById(client, id)
-                .onItem().apply(fruit -> fruit != null ? Response.ok(fruit) : Response.status(Status.NOT_FOUND))
+        return Chat.findById(client, id)
+                .onItem().apply(user -> user != null ? Response.ok(user) : Response.status(Status.NOT_FOUND))
                 .onItem().apply(ResponseBuilder::build);
     }
 
-    @POST
-    public Uni<Response> create(Fruit fruit) {
-        return fruit.save(client)
-                .onItem().apply(id -> URI.create("/fruits/" + id))
-                .onItem().apply(uri -> Response.created(uri).build());
+    @GET
+    @Path("byname/{name}")
+    public Uni<Response> getByName(@PathParam String name) {
+        return Chat.findByName(client, name)
+                .onItem().apply(user -> user != null ? Response.ok(user) : Response.status(Status.NOT_FOUND))
+                .onItem().apply(ResponseBuilder::build);
     }
 
-    @PUT
-    @Path("{id}")
-    public Uni<Response> update(@PathParam Long id, Fruit fruit) {
-        return fruit.update(client)
+    @GET
+    @Path("add/{id}/{name}/{route}/{lat}/{lng}/{userdata}")
+    public Uni<Long> create(@PathParam Long id,@PathParam String name, @PathParam String route,@PathParam double lat,@PathParam double lng, @PathParam String userdata) {
+        System.out.println(lat+lng);
+        Chat usr = new Chat(id, name,  route,  lat,  lng,    userdata);
+        return usr.save(client);
+        
+
+    }
+
+    @GET
+    @Path("update/{id}/{name}/{route}/{lat}/{lng}/{userdata}")
+    public Uni<Response> update(@PathParam Long id,@PathParam String name, @PathParam String route,@PathParam double lat,@PathParam double lng,@PathParam String userdata) {
+        Chat usr = new Chat( id, name,  route,  lat,  lng,  userdata);
+        return usr.update(client)
                 .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
                 .onItem().apply(status -> Response.status(status).build());
     }
@@ -81,8 +91,10 @@ public class FruitResource {
     @DELETE
     @Path("{id}")
     public Uni<Response> delete(@PathParam Long id) {
-        return Fruit.delete(client, id)
+        return Chat.delete(client, id)
                 .onItem().apply(deleted -> deleted ? Status.NO_CONTENT : Status.NOT_FOUND)
                 .onItem().apply(status -> Response.status(status).build());
     }
+
+
 }
