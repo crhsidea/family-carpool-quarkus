@@ -15,8 +15,8 @@ public class User {
 
     public String name;
     public String password;
-    public Long lat;
-    public Long lng;
+    public double lat;
+    public double lng;
     public String userdata;
 
 
@@ -25,7 +25,7 @@ public class User {
         // default constructo.
     }
 
-    public User(String name, String password, Long lat, Long lng, String userdata) {
+    public User(String name, String password, double lat, double lng, String userdata) {
         this.name = name;
         this.password = password;
         this.lat = lat;
@@ -33,7 +33,7 @@ public class User {
         this.userdata = userdata;
     }
 
-    public User(Long id, String name, String password, Long lat, Long lng, String userdata) {
+    public User(Long id, String name, String password, double lat, double lng, String userdata) {
         this.id = id;
         this.name = name;
         this.password = password;
@@ -68,7 +68,7 @@ public class User {
     }
 
     public Uni<Boolean> update(PgPool client) {
-        return client.preparedQuery("UPDATE users SET name = $1, password = $3, lat = $4, lng = $5, userdata = $6 WHERE name = $1").execute(Tuple.of(name, id, password, lat, lng,  userdata ))
+        return client.preparedQuery("UPDATE users SET name = $1, password = $2, lat = $3, lng = $4, userdata = $5 WHERE name = $1").execute(Tuple.of(name, password, lat, lng,  userdata ))
                 .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);
     }
 
@@ -78,6 +78,6 @@ public class User {
     }
 
     private static User from(Row row) {
-        return new User(row.getLong("id"), row.getString("name"), row.getString("password"), row.getLong("lat"), row.getLong("lng"), row.getString("userdata"));
+        return new User(row.getLong("id"), row.getString("name"), row.getString("password"), row.getDouble("lat"), row.getDouble("lng"), row.getString("userdata"));
     }
 }

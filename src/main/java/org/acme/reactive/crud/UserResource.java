@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+import org.jboss.resteasy.annotations.SseElementType;
 import java.net.URI;
 
 @Path("users")
@@ -29,6 +30,7 @@ public class UserResource {
     @Inject
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
     boolean schemaCreate;
+
 
     @Inject
     PgPool client;
@@ -42,7 +44,7 @@ public class UserResource {
 
     private void initdb() {
         client.query("DROP TABLE IF EXISTS users").execute()
-                .flatMap(r -> client.query("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, password TEXT, userdata TEXT, lat FLOAT, lng FLOAT)").execute())
+                .flatMap(r -> client.query("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, password TEXT, userdata TEXT, lat FLOAT(53), lng FLOAT(53))").execute())
                 .await().indefinitely();
     }
 
@@ -69,16 +71,17 @@ public class UserResource {
 
     @GET
     @Path("add/{id}/{name}/{password}/{lat}/{lng}/{userdata}")
-    public Uni<Long> create(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam Long lat,@PathParam Long lng, @PathParam String userdata) {
+    public Uni<Long> create(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng, @PathParam String userdata) {
+        System.out.println(lat+lng);
         User usr = new User(id, name,  password,  lat,  lng,    userdata);
         return usr.save(client);
         
 
     }
 
-    @PUT
-    @Path("set/{id}/{name}/{password}/{lat}/{lng}/{userdata}")
-    public Uni<Response> update(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam Long lat,@PathParam Long lng,@PathParam String userdata) {
+    @GET
+    @Path("update/{id}/{name}/{password}/{lat}/{lng}/{userdata}")
+    public Uni<Response> update(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng,@PathParam String userdata) {
         User usr = new User( id, name,  password,  lat,  lng,  userdata);
         return usr.update(client)
                 .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
@@ -92,4 +95,6 @@ public class UserResource {
                 .onItem().apply(deleted -> deleted ? Status.NO_CONTENT : Status.NOT_FOUND)
                 .onItem().apply(status -> Response.status(status).build());
     }
+
+
 }
