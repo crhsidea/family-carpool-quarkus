@@ -26,7 +26,7 @@ public class Route {
         // default constructo.
     }
 
-    public Route(String dates, String addresses, String users, double lat, double lng, String routedata) {
+    public Route(String dates,  String users,String addresses, double lat, double lng, String routedata) {
         this.dates = dates;
         this.addresses = addresses;
         this.lat = lat;
@@ -35,7 +35,7 @@ public class Route {
         this.users = users; 
     }
 
-    public Route(Long id, String dates, String addresses, String users,  double lat, double lng, String routedata) {
+    public Route(Long id, String dates,  String users,String addresses,  double lat, double lng, String routedata) {
         this.id = id;
         this.dates = dates;
         this.addresses = addresses;
@@ -59,6 +59,14 @@ public class Route {
                 .onItem().apply(iterator -> iterator.hasNext() ? from(iterator.next()) : null);
     }
 
+    public static Multi<Route> findUserRoutes(PgPool client, String user) {
+        return client.query("SELECT * FROM routes WHERE users LIKE '%"+user+"%' ORDER BY dates ASC ").execute()
+                // Create a Multi from the set of rows:
+                .onItem().produceMulti(set -> Multi.createFrom().items(() -> StreamSupport.stream(set.spliterator(), false)))
+                // For each row create a Route instance
+                .onItem().apply(Route::from);
+    }
+
     public Uni<Long> save(PgPool client) {
         return client.preparedQuery("INSERT INTO routes (dates, addresses,users, lat, lng, routedata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING (id)").execute(Tuple.of(dates,addresses,users, lat, lng, routedata ))
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));
@@ -75,6 +83,6 @@ public class Route {
     }
 
     private static Route from(Row row) {
-        return new Route(row.getLong("id"), row.getString("dates"), row.getString("addresses"),  row.getString("users"),row.getDouble("lat"), row.getDouble("lng"), row.getString("routedata"));
+        return new Route(row.getLong("id"), row.getString("dates"),   row.getString("users"),row.getString("addresses"),row.getDouble("lat"), row.getDouble("lng"), row.getString("routedata"));
     }
 }

@@ -44,7 +44,7 @@ public class UserResource {
 
     private void initdb() {
         client.query("DROP TABLE IF EXISTS users").execute()
-                .flatMap(r -> client.query("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, password TEXT, userdata TEXT, lat FLOAT(53), lng FLOAT(53))").execute())
+                .flatMap(r -> client.query("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, password TEXT, userdata TEXT, lat FLOAT(53), lng FLOAT(53), friends TEXT)").execute())
                 .await().indefinitely();
     }
 
@@ -70,19 +70,19 @@ public class UserResource {
     }
 
     @GET
-    @Path("add/{id}/{name}/{password}/{lat}/{lng}/{userdata}")
-    public Uni<Long> create(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng, @PathParam String userdata) {
+    @Path("add/{id}/{name}/{password}/{lat}/{lng}/{userdata}/{friends}")
+    public Uni<Long> create(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng, @PathParam String userdata, @PathParam String friends) {
         System.out.println(lat+lng);
-        User usr = new User(id, name,  password,  lat,  lng,    userdata);
+        User usr = new User(id, name,  password,  lat,  lng,    userdata, friends);
         return usr.save(client);
         
 
     }
 
     @GET
-    @Path("update/{id}/{name}/{password}/{lat}/{lng}/{userdata}")
-    public Uni<Response> update(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng,@PathParam String userdata) {
-        User usr = new User( id, name,  password,  lat,  lng,  userdata);
+    @Path("update/{id}/{name}/{password}/{lat}/{lng}/{userdata}/{friends}")
+    public Uni<Response> update(@PathParam Long id,@PathParam String name, @PathParam String password,@PathParam double lat,@PathParam double lng,@PathParam String userdata, @PathParam String friends) {
+        User usr = new User( id, name,  password,  lat,  lng,  userdata, friends);
         return usr.update(client)
                 .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
                 .onItem().apply(status -> Response.status(status).build());

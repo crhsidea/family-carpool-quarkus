@@ -54,6 +54,12 @@ public class RouteResource {
     }
 
     @GET
+    @Path("name/{name}")
+    public Multi<Route> getbyName(@PathParam String name) {
+        return Route.findUserRoutes(client, name);
+    }
+
+    @GET
     @Path("{id}")
     public Uni<Response> getSingle(@PathParam Long id) {
         return Route.findById(client, id)
