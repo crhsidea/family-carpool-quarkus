@@ -44,7 +44,7 @@ public class ChatResource {
 
     private void initdb() {
         client.query("DROP TABLE IF EXISTS chats").execute()
-                .flatMap(r -> client.query("CREATE TABLE chats (id SERIAL PRIMARY KEY, name TEXT NOT NULL, route TEXT, userdata TEXT, lat FLOAT(53), lng FLOAT(53))").execute())
+                .flatMap(r -> client.query("CREATE TABLE chats (id SERIAL PRIMARY KEY, name TEXT NOT NULL, route TEXT, chatdata TEXT, lat FLOAT(53), lng FLOAT(53))").execute())
                 .await().indefinitely();
     }
 
@@ -67,6 +67,12 @@ public class ChatResource {
         return Chat.findByName(client, name)
                 .onItem().apply(user -> user != null ? Response.ok(user) : Response.status(Status.NOT_FOUND))
                 .onItem().apply(ResponseBuilder::build);
+    }
+
+    @GET
+    @Path("name/{name}")
+    public Multi<Chat> getbyName(@PathParam String name) {
+        return Chat.findUserChats(client, name);
     }
 
     @GET

@@ -54,6 +54,12 @@ public class MessageResource {
     }
 
     @GET
+    @Path("name/{name}")
+    public Multi<Message> getbyName(@PathParam String name) {
+        return Message.findMessages(client, name);
+    }
+
+    @GET
     @Path("{id}")
     public Uni<Response> getSingle(@PathParam Long id) {
         return Message.findById(client, id)
