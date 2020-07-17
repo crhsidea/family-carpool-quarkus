@@ -67,6 +67,14 @@ public class Route {
                 .onItem().apply(Route::from);
     }
 
+    public static Multi<Route> reccomend(PgPool client, double lat, double lng, double tolerance) {
+        return client.preparedQuery("SELECT * FROM routes WHERE  lat>$1 and lat<$2 and lng>$3 and lng<$4").execute(Tuple.of(lat-tolerance, lat+tolerance, lng-tolerance, lng+tolerance))
+                // Create a Multi from the set of rows:
+                .onItem().produceMulti(set -> Multi.createFrom().items(() -> StreamSupport.stream(set.spliterator(), false)))
+                // For each row create a Route instance
+                .onItem().apply(Route::from);
+    }
+
     public Uni<Long> save(PgPool client) {
         return client.preparedQuery("INSERT INTO routes (dates, addresses,users, lat, lng, routedata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING (id)").execute(Tuple.of(dates,addresses,users, lat, lng, routedata ))
                 .onItem().apply(pgRowSet -> pgRowSet.iterator().next().getLong("id"));

@@ -88,6 +88,15 @@ public class UserResource {
                 .onItem().apply(status -> Response.status(status).build());
     }
 
+    @GET
+    @Path("coords/{name}/{lat}/{lng}")
+    public Uni<Response> updateCoords(@PathParam String name,@PathParam double lat,@PathParam double lng) {
+        User usr = new User();
+        return usr.updateCoords(client, name,   lat,  lng)
+                .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
+                .onItem().apply(status -> Response.status(status).build());
+    }
+
     @DELETE
     @Path("{id}")
     public Uni<Response> delete(@PathParam Long id) {

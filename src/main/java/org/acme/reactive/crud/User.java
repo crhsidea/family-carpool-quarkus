@@ -75,6 +75,11 @@ public class User {
                 .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);
     }
 
+    public Uni<Boolean> updateCoords(PgPool client, String nam, double la, double ln) {
+        return client.preparedQuery("UPDATE users SET lat = $2, lng = $3 WHERE name = $1").execute(Tuple.of(nam, la, ln ))
+                .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);
+    }
+
     public static Uni<Boolean> delete(PgPool client, Long id) {
         return client.preparedQuery("DELETE FROM users WHERE id = $1").execute(Tuple.of(id))
                 .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);

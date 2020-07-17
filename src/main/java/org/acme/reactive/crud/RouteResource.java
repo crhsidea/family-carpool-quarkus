@@ -60,12 +60,21 @@ public class RouteResource {
     }
 
     @GET
+    @Path("rec/{lat}/{lng}")
+    public Multi<Route> reccommend(@PathParam double lat, @PathParam double lng) {
+        return Route.reccomend(client, lat, lng, .01);
+    }
+
+
+    @GET
     @Path("{id}")
     public Uni<Response> getSingle(@PathParam Long id) {
         return Route.findById(client, id)
                 .onItem().apply(user -> user != null ? Response.ok(user) : Response.status(Status.NOT_FOUND))
                 .onItem().apply(ResponseBuilder::build);
     }
+
+
 
 
     @GET

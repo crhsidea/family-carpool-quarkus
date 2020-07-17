@@ -31,7 +31,6 @@ public class ChatResource {
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
     boolean schemaCreate;
 
-
     @Inject
     PgPool client;
 
