@@ -6,8 +6,14 @@ import io.vertx.mutiny.pgclient.PgPool;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -21,15 +27,24 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import org.jboss.resteasy.annotations.SseElementType;
 import java.net.URI;
+import org.reactivestreams.Publisher;
 
+import org.acme.reactive.crud.User;
+
+@ApplicationScoped
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserResource {
 
+    @Inject@Channel("locations")Emitter<String>locationsemitter;
+
     @Inject
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
     boolean schemaCreate;
+
+    @Inject
+    @Channel("locations")Publisher<String>locationsdata;
 
 
     @Inject
@@ -59,6 +74,15 @@ public class UserResource {
         return User.findById(client, id)
                 .onItem().apply(user -> user != null ? Response.ok(user) : Response.status(Status.NOT_FOUND))
                 .onItem().apply(ResponseBuilder::build);
+    }
+
+    @GET
+    @Path("/locstream")
+    @Produces(MediaType.SERVER_SENT_EVENTS) 
+    @SseElementType("text/plain") 
+    public Publisher<String> stream(@PathParam String user) { 
+
+        return locationsdata;
     }
 
     @GET
@@ -95,6 +119,15 @@ public class UserResource {
         return usr.updateCoords(client, name,   lat,  lng)
                 .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
                 .onItem().apply(status -> Response.status(status).build());
+    }
+    
+    @GET
+    @Path("updatecoords/{name}/{lat}/{lng}")
+    public void changeCoords(@PathParam String name,@PathParam double lat,@PathParam double lng) {
+        Jsonb jsonb = JsonbBuilder.create();
+        Location l = new Location(lat, lng, name);
+        locationsemitter.send(jsonb.toJson(l));
+    
     }
 
     @DELETE
