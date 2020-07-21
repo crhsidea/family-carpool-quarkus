@@ -2,6 +2,7 @@ package org.acme.reactive.crud;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
 import io.vertx.mutiny.pgclient.PgPool;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
@@ -37,7 +38,11 @@ import org.acme.reactive.crud.User;
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserResource {
 
-    @Inject@Channel("locations")Emitter<String>locationsemitter;
+    @Inject
+    @Broadcast
+    @Channel
+    ("locations")
+    Emitter<String>locationsemitter;
 
     @Inject
     @ConfigProperty(name = "myapp.schema.create", defaultValue = "true")
@@ -122,6 +127,7 @@ public class UserResource {
     }
     
     @GET
+    @Broadcast
     @Path("updatecoords/{name}/{lat}/{lng}")
     public void changeCoords(@PathParam String name,@PathParam double lat,@PathParam double lng) {
         Jsonb jsonb = JsonbBuilder.create();

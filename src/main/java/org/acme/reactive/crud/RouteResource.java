@@ -96,6 +96,15 @@ public class RouteResource {
                 .onItem().apply(status -> Response.status(status).build());
     }
 
+    @GET
+    @Path("updatedriver/{id}/{users}/{addresses}")
+    public Uni<Response> updateDriver(@PathParam Long id,@PathParam String users,@PathParam String addresses) {
+        Route usr = new Route( id, "", users, addresses,  0,  0,  "");
+        return usr.update(client)
+                .onItem().apply(updated -> updated ? Status.OK : Status.NOT_FOUND)
+                .onItem().apply(status -> Response.status(status).build());
+    }
+
     @DELETE
     @Path("{id}")
     public Uni<Response> delete(@PathParam Long id) {

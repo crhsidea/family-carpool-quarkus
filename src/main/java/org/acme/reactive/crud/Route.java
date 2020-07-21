@@ -67,6 +67,8 @@ public class Route {
                 .onItem().apply(Route::from);
     }
 
+    
+
     public static Multi<Route> reccomend(PgPool client, double lat, double lng, double tolerance) {
         return client.preparedQuery("SELECT * FROM routes WHERE  lat>$1 and lat<$2 and lng>$3 and lng<$4").execute(Tuple.of(lat-tolerance, lat+tolerance, lng-tolerance, lng+tolerance))
                 // Create a Multi from the set of rows:
@@ -82,6 +84,11 @@ public class Route {
 
     public Uni<Boolean> update(PgPool client) {
         return client.preparedQuery("UPDATE routes SET dates = $1, addresses = $2, lat = $3, lng = $4, routedata = $5, users = $6 WHERE dates = $1").execute(Tuple.of(dates, addresses, lat, lng,  routedata, users ))
+                .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);
+    }
+
+    public Uni<Boolean> updateDriver(PgPool client) {
+        return client.preparedQuery("UPDATE routes SET addresses = $1 users = $2 WHERE id = $3").execute(Tuple.of(addresses, users, id))
                 .onItem().apply(pgRowSet -> pgRowSet.rowCount() == 1);
     }
 
